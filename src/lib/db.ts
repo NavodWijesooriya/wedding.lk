@@ -45,7 +45,11 @@ function init(): DatabaseSync {
       text TEXT NOT NULL, created_at INTEGER NOT NULL
     );
   `);
-  seedAdmin(db);
+  const cols = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "firebase_uid")) {
+    db.exec("ALTER TABLE users ADD COLUMN firebase_uid TEXT");
+    db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_firebase_uid ON users(firebase_uid)");
+  }
   return db;
 }
 
@@ -61,16 +65,6 @@ export function verifyPassword(pw: string, stored: string): boolean {
   const hash = crypto.scryptSync(pw, Buffer.from(saltHex, "hex"), 64);
   const expected = Buffer.from(hashHex, "hex");
   return hash.length === expected.length && crypto.timingSafeEqual(hash, expected);
-}
-
-function seedAdmin(db: DatabaseSync) {
-  const has = db.prepare("SELECT 1 FROM users WHERE role='admin' LIMIT 1").get();
-  if (has) return;
-  const email = (process.env.ADMIN_EMAIL || "admin@wedding.lk").toLowerCase();
-  const pw = process.env.ADMIN_PASSWORD || "admin12345";
-  db.prepare("INSERT OR IGNORE INTO users (id,email,name,password_hash,role,created_at) VALUES (?,?,?,?,?,?)").run(
-    crypto.randomUUID(), email, "Administrator", hashPassword(pw), "admin", Date.now(),
-  );
 }
 
 export function db(): DatabaseSync {

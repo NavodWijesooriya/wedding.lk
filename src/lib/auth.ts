@@ -7,7 +7,8 @@ import { db, row } from "./db";
 export type User = { id: string; email: string; name: string; role: "user" | "admin" };
 
 const COOKIE = "wl_session";
-const TTL = 1000 * 60 * 60 * 24 * 30;
+// Firebase-backed sessions are deliberately short: they are re-issued from a fresh ID token + Firestore status check.
+const TTL = 1000 * 60 * 60;
 const sha = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
 
 export async function createSession(userId: string) {

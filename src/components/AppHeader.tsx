@@ -4,10 +4,11 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Users, PenLine, ShieldCheck, LogOut } from "lucide-react";
 import { Brand } from "@/components/ui/Brand";
 import { LangSwitch, useI18n } from "@/components/ui/i18n";
-import { logoutAction } from "@/app/actions/auth";
+import { useAuth } from "@/context/AuthContext";
 
 export function AppHeader({ user }: { user: { name: string; email: string; role: string } }) {
   const { t } = useI18n();
+  const { logout } = useAuth();
   const path = usePathname();
   const nav = [
     { href: "/dashboard", label: t("Dashboard", "උපකරණ පුවරුව"), icon: LayoutDashboard, match: (p: string) => p === "/dashboard" },
@@ -29,7 +30,7 @@ export function AppHeader({ user }: { user: { name: string; email: string; role:
         <div className="ml-auto flex items-center gap-2">
           <LangSwitch className="hidden sm:inline-flex" />
           <span className="hidden text-sm text-ink-500 lg:inline">{user.name}</span>
-          <form action={logoutAction}><button className="btn-ghost" aria-label={t("Sign out", "පිටවන්න")}><LogOut className="size-4" /><span className="hidden sm:inline">{t("Sign out", "පිටවන්න")}</span></button></form>
+          <button className="btn-ghost" onClick={() => logout()} aria-label={t("Sign out", "පිටවන්න")}><LogOut className="size-4" /><span className="hidden sm:inline">{t("Sign out", "පිටවන්න")}</span></button>
         </div>
       </div>
       <nav className="flex gap-1 overflow-x-auto border-t border-ink-200/60 px-3 py-1.5 md:hidden" aria-label="Main mobile">

@@ -38,7 +38,7 @@ export default async function Home() {
           ) : (
             <>
               <Link href="/login" className="btn-ghost">{t("Sign in", "පිවිසෙන්න")}</Link>
-              <Link href="/register" className="btn-primary">{t("Get started", "ආරම්භ කරන්න")}</Link>
+              <Link href="/signup" className="btn-primary">{t("Get started", "ආරම්භ කරන්න")}</Link>
             </>
           )}
         </nav>
@@ -54,7 +54,7 @@ export default async function Home() {
             </h1>
             <p className="mt-6 max-w-xl text-lg text-ink-700">{t("Build a beautiful Sinhala & English invitation website in minutes. Click any text or photo to edit — no coding, no designer, no stress.", "මිනිත්තු කිහිපයකින් අලංකාර සිංහල සහ ඉංග්‍රීසි ආරාධන වෙබ් අඩවියක් සාදන්න. ඕනෑම අකුරක් හෝ ඡායාරූපයක් ක්ලික් කර සංස්කරණය කරන්න — කේත ලිවීමක්, නිර්මාණකරුවෙකු හෝ ආතතියක් නැත.")}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={user ? "/dashboard" : "/register"} className="btn-primary btn-lg">{t("Create your website", "ඔබේ වෙබ් අඩවිය සාදන්න")} <ArrowRight className="size-5" /></Link>
+              <Link href={user ? "/dashboard" : "/signup"} className="btn-primary btn-lg">{t("Create your website", "ඔබේ වෙබ් අඩවිය සාදන්න")} <ArrowRight className="size-5" /></Link>
               <Link href="/templates" className="btn-secondary btn-lg">{t("Browse templates", "සැලසුම් බලන්න")}</Link>
             </div>
             <p className="mt-4 text-sm text-ink-500">{t("Free to start · No credit card", "නොමිලේ ආරම්භය · ණය කාඩ්පතක් අවශ්‍ය නැත")}</p>
@@ -123,7 +123,7 @@ export default async function Home() {
         <section className="px-5 py-24 text-center">
           <Lotus className="mx-auto h-14 w-20 text-gold-500" />
           <h2 className="mx-auto mt-4 max-w-2xl font-display text-4xl font-bold sm:text-5xl">{t("Your invitation is a few clicks away.", "ඔබේ ආරාධනය ක්ලික් කිහිපයක් දුරින්.")}</h2>
-          <Link href={user ? "/dashboard" : "/register"} className="btn-primary btn-lg mt-8">{t("Start for free", "නොමිලේ ආරම්භ කරන්න")} <ArrowRight className="size-5" /></Link>
+          <Link href={user ? "/dashboard" : "/signup"} className="btn-primary btn-lg mt-8">{t("Start for free", "නොමිලේ ආරම්භ කරන්න")} <ArrowRight className="size-5" /></Link>
         </section>
       </main>
       <footer className="border-t border-ink-200/70 py-8 text-center text-sm text-ink-500">© {new Date().getFullYear()} Wedding.lk — {t("Made with love in Sri Lanka", "ශ්‍රී ලංකාවේ ආදරයෙන් නිර්මිතයි")}</footer>

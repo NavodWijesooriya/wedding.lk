@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth";
 import { adminList } from "@/lib/weddings";
 import { AdminTable } from "@/components/AdminTable";
+import { AdminTabs } from "@/components/AdminTabs";
 import { db, row } from "@/lib/db";
 import { getT } from "@/lib/lang";
 
@@ -23,7 +24,7 @@ export default async function Page() {
         <h1 className="font-display text-4xl font-bold sm:text-5xl">{t("Admin", "පරිපාලක")}</h1>
         <p className="mt-1 text-ink-700">{t(`${users} users · ${list.length} websites · ${pending} awaiting approval`, `පරිශීලකයන් ${users} · වෙබ් අඩවි ${list.length} · අනුමැතිය බලාපොරොත්තුවෙන් ${pending}`)}</p>
       </div>
-      <AdminTable rows={list} />
+      <AdminTabs websites={<AdminTable rows={list} />} />
     </div>
   );
 }

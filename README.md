@@ -3,26 +3,40 @@
 A Next.js (App Router, TypeScript, Tailwind CSS v4) platform where couples create, edit, preview and publish a
 Sinhala / English wedding invitation website without writing code.
 
-> **Note on "existing" systems.** The repository was empty when this work started (only a README), so there was no
-> existing database, auth or storage to reuse. This project therefore ships self-contained implementations that run
-> with zero external services. Each sits behind a small module so it can be swapped for a hosted service:
->
-> | Concern | Implementation | Swap point |
-> |---|---|---|
-> | Database | SQLite via Node's built-in `node:sqlite` (Node ≥ 22.13) | `src/lib/db.ts`, `src/lib/weddings.ts` |
-> | Auth | Email + password (scrypt), hashed server-side session tokens in an `httpOnly` cookie | `src/lib/auth.ts`, `src/app/actions/auth.ts` |
-> | Image storage | Local disk (`DATA_DIR/uploads`), resized + converted to WebP with `sharp`, served from `/media/*` | `src/app/api/upload`, `src/app/media` |
+> **Architecture note.** Identity, roles and **user approval live in Firebase** (Authentication + Firestore). Website data
+> (documents, RSVPs, uploads) stays in SQLite (`node:sqlite`, Node ≥ 22.13) and images on local disk (`sharp` → WebP). A server
+> route verifies the Firebase ID token and the user's Firestore status before issuing the app session, so the dashboard,
+> builder and every server action remain protected server-side.
 
 ## Run it
 
 ```bash
-cp .env.example .env.local   # optional
+cp .env.example .env.local   # fill in the Firebase values
 npm install
 npm run dev                  # or: npm run build && npm start
 ```
+Persist `DATA_DIR` in production (database + uploads). Behind plain HTTP set `INSECURE_COOKIES=1`.
 
-First start creates an admin (`ADMIN_EMAIL` / `ADMIN_PASSWORD`, defaults `admin@wedding.lk` / `admin12345` — **change these**).
-Persist `DATA_DIR` in production (it holds the database and uploads). Behind plain HTTP set `INSECURE_COOKIES=1`.
+## Firebase setup
+
+1. **Create a project** at <https://console.firebase.google.com>, add a *Web app* and copy its config into `.env.local`
+   (`NEXT_PUBLIC_FIREBASE_API_KEY`, `_AUTH_DOMAIN`, `_PROJECT_ID`, `_STORAGE_BUCKET`, `_MESSAGING_SENDER_ID`, `_APP_ID`).
+2. **Authentication → Sign-in method**: enable *Email/Password* and *Google*. Under *Settings → Authorized domains* add your production domain.
+3. **Firestore Database**: create it (production mode), then publish the rules in [`firestore.rules`](./firestore.rules)
+   (Console → Firestore → Rules, or `firebase deploy --only firestore:rules`).
+4. **Create the first admin** (rules deliberately prevent anyone from promoting themselves): sign up on `/signup`, then in
+   Console → Firestore → `users/<uid>` set `role` = `admin` and `status` = `approved`. That admin approves everyone else at `/admin`.
+
+### How approval works
+* Sign-up (email/password or Google) creates `users/{uid}` = `{ uid, email, fullName, role: 'user', status: 'pending', createdAt }`.
+* `ApprovalGuard` wraps the dashboard, builder and auth pages: **pending** → "Account pending approval", **rejected** → "Access denied",
+  **approved** or **admin** → access. It listens to the profile in real time, so approving/revoking takes effect without a refresh.
+* Only approved users/admins get a server session (`POST /api/auth/session` verifies the ID token signature, audience, issuer and expiry
+  against Google's public keys, then reads `users/{uid}` via the Firestore REST API with the user's own token — no service account needed).
+  Server sessions last **1 hour** and are renewed while the user is approved, so a revocation reaches the server within the hour at the latest
+  (the open tab is blocked immediately).
+* `/admin` (admin role only, enforced by the server session *and* Firestore rules) has **User approvals** (Pending / Approved / Rejected,
+  search, Approve / Reject / Revoke) and **Website reviews** (publishing approval).
 
 ## Features
 
@@ -67,11 +81,7 @@ A website is a single validated JSON document (`Doc`): `info` (bilingual wedding
 
 ## Tests
 
-`e2e/journey.cjs` drives the full journey with Playwright against a running server (register → wizard → template →
-inline edit → styling → uploads → sections → Sinhala → devices → autosave/persistence → publish → admin approval →
-public page → guest RSVP → dashboard → unpublish/republish → authorization checks). `e2e/mobile.cjs` is a phone/Sinhala smoke test.
-
-```bash
-npm run build && DATA_DIR=/tmp/wl INSECURE_COOKIES=1 npm start -- -p 3100 &
-BASE=http://localhost:3100 node e2e/journey.cjs
-```
+* `node --experimental-strip-types e2e/firebase-verify.test.mjs` — unit tests for ID-token verification and profile parsing (no Firebase needed).
+* `e2e/invitation.cjs` — smoke test of the standalone template at `/invitation-demo`.
+* `e2e/journey.cjs` / `e2e/mobile.cjs` — full Playwright journeys written against the previous email/password sign-up; the register/login
+  and admin-login steps must be adapted to a Firebase project or the Firebase Emulator Suite before they run again.
